@@ -60,5 +60,7 @@ private:
 	bool rendermenu;
 
 	
+	//error checking
+	bool Init_Success;
 };
 

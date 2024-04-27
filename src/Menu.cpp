@@ -37,6 +37,8 @@ void Menu::Zero() {
 
 	thicknessmult = 1.f;
 
+	Init_Success = false;
+
 	//we need to set the cbSize because of versioning
 	wndc.cbSize = sizeof(WNDCLASSEXW);
 }
@@ -58,7 +60,7 @@ Menu::~Menu() {
 }
 
 bool Menu::Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const int screen_height) {
-	bool initsucceded = true;
+	Init_Success = true;
 
 	this->screen_width = screen_width;
 	this->screen_height = screen_height;
@@ -133,7 +135,7 @@ bool Menu::Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const
 	ID3D11Texture2D* back_buffer{};
 	swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&back_buffer);
 	if (!back_buffer) {
-		initsucceded = false;
+		Init_Success = false;
 	}
 	else {
 		device->CreateRenderTargetView(back_buffer, nullptr, &render_targe_view);
@@ -145,7 +147,7 @@ bool Menu::Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const
 
 	ImGuiInit();
 
-	return 1;
+	return Init_Success;
 }
 void Menu::ImGuiInit() {
 	ImGui::CreateContext();
@@ -258,11 +260,12 @@ void Menu::HandleMessages() {
 	}
 }
 void Menu::CloseD3DandImGui() {
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
+	if (Init_Success) {
+		ImGui_ImplDX11_Shutdown();
+		ImGui_ImplWin32_Shutdown();
 
-	ImGui::DestroyContext();
-
+		ImGui::DestroyContext();
+	}
 	if (swap_chain) swap_chain->Release();
 	if (device_context)device_context->Release();
 	if (device) device->Release();

@@ -24,22 +24,24 @@ int screen_height = 720;
 INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT cmd_show) {
 
 	Menu menu;
-
 	//if the game is not opened before we try to run we try some more
-	//if (!Memory.ProcessOpen()) {
-	//	//we try for 5 seconds to find if the game is opened
-	//	for (int tries = 0; tries < 10; tries++) {
-	//		Memory.SetProcIDandHandle("cs2.exe");
-	//		Sleep(500);
-	//	}
-	//	//if the game is still not open we close everything and exit
-	//	if (!Memory.ProcessOpen()) {
-	//		return 1;
-	//	}
-	//}
+	if (!Memory.ProcessOpen()) {
+		OutputDebugStringA("Process not open! Attempting to find process.\n");
+		//we try for 5 seconds to find if the game is opened
+		for (int tries = 0; tries < 10; tries++) {
+			OutputDebugStringA("Retrying...\n");
+			Memory.SetProcIDandHandle("cs2.exe");
+			Sleep(500);
+		}
+		//if the game is still not open we close everything and exit
+		if (!Memory.ProcessOpen()) {
+			OutputDebugStringA("Failed to open proces. Exiting now\n");
+			menu.SetRunning(false);
+		}
+	}
 
 	const auto clientaddr = Memory.GetModuleAddress("client.dll");
-	if (!clientaddr) { OutputDebugStringA("Game not open! Could not find the process specified.\n"); menu.SetRunning(false); }
+	if (!clientaddr) { OutputDebugStringA("Game not open! Could not find the address of the module specified.\n"); menu.SetRunning(false); }
 
 	//if it fails initialisation we exit
 	if (!menu.Init(hInstance, cmd_show, screen_width, screen_height))
