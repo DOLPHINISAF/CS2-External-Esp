@@ -12,11 +12,11 @@ class Menu
 {
 public:
 	Menu();
-	Menu(HINSTANCE hInstance, INT cmd_show, const int screen_width, const int screen_height);
+	Menu(HINSTANCE hInstance, INT cmd_show);
 	~Menu();
 	void Zero();
 
-	bool Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const int screen_height);
+	bool Init(HINSTANCE hInstance, INT cmd_show);
 	void ImGuiInit();
 
 	void StartRenderFrame();
@@ -31,11 +31,15 @@ public:
 	void SetRunning(bool value) { cheatisrunning = value; }
 	bool GetRunning() { return cheatisrunning; }
 
+	HWND GetHWND() { return window; }
+	ImVec2 GetDimensions() { return ImVec2((float)screen_width, (float)screen_height); }
+
 	bool esp_enabled;
 	int esp_coloring_used;
 	float* constespcolor;
 	float thicknessmult;
 	int frametime; 
+
 private:
 
 	HWND window;
@@ -46,14 +50,13 @@ private:
 	IDXGISwapChain* swap_chain;
 	ID3D11RenderTargetView* render_targe_view;
 
+
 	int screen_width;
 	int screen_height;
-
 	
 	bool cheatisrunning;
 
-	
-	
+
 	HWND cs2window;
 	bool pressednum8;
 	bool pressednum0;
