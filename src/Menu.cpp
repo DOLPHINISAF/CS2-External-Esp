@@ -13,6 +13,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 
 	return DefWindowProcW(window, message, w_param, l_param);
 }
+
 void Menu::Zero() {
 	screen_height = 0;
 	screen_width = 0;
@@ -27,7 +28,7 @@ void Menu::Zero() {
 	frametime = 0;
 	cheatisrunning = true;
 
-	esp_enabled = false;
+	esp_enabled = true;
 	esp_coloring_used = 0;
 	constespcolor = new float[3]();
 	cs2window = 0;
@@ -46,11 +47,11 @@ void Menu::Zero() {
 Menu::Menu() {
 	Zero(); // we only initialise every var 0
 }
-Menu::Menu(HINSTANCE hInstance, INT cmd_show, const int screen_width, const int screen_height) 
+Menu::Menu(HINSTANCE hInstance, INT cmd_show) 
 {
 	Zero();
 
-	Init(hInstance, cmd_show, screen_width, screen_height);
+	Init(hInstance, cmd_show);
 }
 
 Menu::~Menu() {
@@ -59,11 +60,11 @@ Menu::~Menu() {
 	delete constespcolor;
 }
 
-bool Menu::Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const int screen_height) {
+bool Menu::Init(HINSTANCE hInstance, INT cmd_show) {
 	Init_Success = true;
 
-	this->screen_width = screen_width;
-	this->screen_height = screen_height;
+	screen_width = 1280;
+	screen_height = 720;
 
 	wndc.style = CS_HREDRAW | CS_VREDRAW;
 	wndc.lpfnWndProc = window_procedure;
@@ -134,9 +135,7 @@ bool Menu::Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const
 
 	ID3D11Texture2D* back_buffer{};
 	swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&back_buffer);
-	if (!back_buffer) {
-		Init_Success = false;
-	}
+	if (!back_buffer) { Init_Success = false; }
 	else {
 		device->CreateRenderTargetView(back_buffer, nullptr, &render_targe_view);
 		back_buffer->Release();
@@ -146,15 +145,16 @@ bool Menu::Init(HINSTANCE hInstance, INT cmd_show, const int screen_width, const
 
 
 	ImGuiInit();
-
+	
 	return Init_Success;
 }
+
 void Menu::ImGuiInit() {
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark(); // it styles the menu to dark
 
-	ImGui_ImplWin32_Init(window);
-	ImGui_ImplDX11_Init(device, device_context);
+	Init_Success = ImGui_ImplWin32_Init(window);
+	Init_Success = ImGui_ImplDX11_Init(device, device_context);
 
 }
 
@@ -166,9 +166,8 @@ void Menu::StartRenderFrame() {
 	ImGui::NewFrame();
 
 	if (rendermenu) {
-		ImGuiWindowFlags flags = 64; // resizes the window to fit everything it contains
+		ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar; // resizes the window to fit everything it contains
 		ImGui::Begin("ESP OPTIONS", NULL, flags);
-
 		float fps;
 		if (frametime == 0) fps = 0;
 		else fps = 1000.f / frametime;
@@ -193,6 +192,8 @@ void Menu::StartRenderFrame() {
 }
 
 void Menu::EndRenderFrame() {
+	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2{ 0.f,0.f }, ImVec2{ 500.f,500.f }, ImColor(0, 0, 0), 0.f, NULL);
+
 	ImGui::Render();
 
 	if (!render_targe_view)
@@ -259,6 +260,7 @@ void Menu::HandleMessages() {
 
 	}
 }
+
 void Menu::CloseD3DandImGui() {
 	if (Init_Success) {
 		ImGui_ImplDX11_Shutdown();
@@ -272,6 +274,7 @@ void Menu::CloseD3DandImGui() {
 	if (render_targe_view)render_targe_view->Release();
 
 }
+
 void Menu::CloseWin32() {
 	if(window)	DestroyWindow(window);
 	UnregisterClassW(wndc.lpszClassName, wndc.hInstance);
