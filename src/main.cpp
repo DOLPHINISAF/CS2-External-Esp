@@ -25,14 +25,13 @@ INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLin
 
 	Menu menu;
 
-	//if the game is not opened before we try to run we try some more
+	//if the game is not opened we throw error message
 	if (!Memory.ProcessOpen()) {
-		OutputDebugStringA("[DEBUG TEXT]Process not open! Attempting to find process.\n");
+		OutputDebugStringA("[DEBUG TEXT]Process not open!\n");
 
 		MessageBoxA(NULL, "Game not open!", NULL, MB_OK);
 	}
 
-	
 	const auto clientaddr = Memory.GetModuleAddress("client.dll");
 	if (!clientaddr) { OutputDebugStringA("[DEBUG TEXT]Game not open! Could not find the address of the module specified.\n"); menu.SetRunning(false); }
 
@@ -42,9 +41,10 @@ INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLin
 
 	{
 		ImVec2 temp = menu.GetDimensions();
-		screen_height = temp.y;
-		screen_width  = temp.x;
+		screen_height = (int)temp.y;
+		screen_width  = (int)temp.x;
 	}
+
 	ULONGLONG framestarttick = 0ULL;
 	int deltaticks = 0;
 	while (menu.GetRunning())
@@ -53,16 +53,12 @@ INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLin
 
 		framestarttick = GetTickCount64();
 
-
-		//it gets the total time from the previous loop
-		Sleep(16);
 		menu.HandleKeys();
 
 		menu.HandleMessages();
 		if (!menu.GetRunning()) break;
 
 		menu.StartRenderFrame();
-
 
 		//aici e codul custom
 		auto localplayer = Memory.Read<uintptr_t>(clientaddr + dwLocalPlayerPawn);
@@ -76,7 +72,7 @@ INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLin
 			if (!listEntry)
 				continue;
 		
-			auto currentController = Memory.Read<uintptr_t>(listEntry + i * 120);
+			auto currentController = Memory.Read<uintptr_t>(listEntry + i * 120ULL);
 			if (!currentController)
 				continue;
 		
@@ -84,13 +80,13 @@ INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLin
 			if (!pawnHandle)
 				continue;
 
-			auto entry2 = Memory.Read<uintptr_t>(entitylist + 0x8 * ((pawnHandle & 0x7FFF) >> 9) + 0x10);
+			auto entry2 = Memory.Read<uintptr_t>(entitylist + 0x8ULL * ((pawnHandle & 0x7FFF) >> 9) + 0x10);
 		
-			auto currentPawn = Memory.Read<uintptr_t>(entry2 + 0x78 * (pawnHandle & 0x1FF));
+			auto currentPawn = Memory.Read<uintptr_t>(entry2 + 0x78ULL * (pawnHandle & 0x1FF));
 		
 			auto viewmatrix = Memory.Read<ViewMatrix>(clientaddr + dwViewMatrix);
 
-			if (menu.esp_enabled) {
+			if (menu.IsEspEnabled()) {
 
 				auto player_health = Memory.Read<BYTE>(currentPawn + m_iHealth);
 				
@@ -112,30 +108,8 @@ INT APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLin
 						//checks if the head and the feet are visible so we don't render what we can't see
 						if (Vec3::World2Screen(feet, viewmatrix.vm, absorigin) && (Vec3::World2Screen(head, viewmatrix.vm, eyepos)))
 						{
-							float width = (head.y - feet.y);
-
-							ImVec2 topleft;
-							topleft.y = head.y;
-							topleft.x = head.x + width / 3;
-
-							ImVec2 bottomright;
-							bottomright.y = feet.y;
-							bottomright.x = feet.x - width / 3;
-
-							ImU32 color;
-							if (menu.esp_coloring_used) { // if we render the boxes with a color we choose
-								color = ImGui::ColorConvertFloat4ToU32(ImVec4(menu.constespcolor[0], menu.constespcolor[1], menu.constespcolor[2], 1.f));
-							}
-							else {
-								auto health = Memory.Read<int>(currentPawn + m_iHealth);
-								int green = 255 - (int)((100.f - health) * 2.55f);
-								int red = (int)((100.f - health) * 2.55f);
-								color = ImColor(red, green, 0);
-							}
-							ImDrawList *drawlist = ImGui::GetBackgroundDrawList();
-							drawlist->AddRectFilled(ImVec2{ 0.f,0.f }, ImVec2{ 500.f,500.f }, color, 0.f, NULL);
-							drawlist->AddRect(topleft, bottomright, color, 0.f, NULL, 20.f);
-							drawlist->AddCircleFilled(head, menu.thicknessmult * -width / 25.f, ImColor(255, 255, 255));
+							auto health = Memory.Read<int>(localplayer + m_iHealth);// useless memory read if we choose const color
+							menu.RenderEsp(head, feet, health);
 
 						}
 					}

@@ -191,8 +191,38 @@ void Menu::StartRenderFrame() {
 
 }
 
+void Menu::RenderEsp(ImVec2 head, ImVec2 feet, int health)
+{
+	ImDrawList *drawlist = ImGui::GetBackgroundDrawList();
+
+	//distance between the head and feet
+	float width = (head.y - feet.y);
+
+	
+	ImVec2 topleft;
+	topleft.y = head.y;
+	topleft.x = head.x + width / 3;
+
+	ImVec2 bottomright;
+	bottomright.y = feet.y;
+	bottomright.x = feet.x - width / 3;
+
+	ImU32 color;
+	if (esp_coloring_used) { // for static color of the esp box
+		color = ImGui::ColorConvertFloat4ToU32(ImVec4(constespcolor[0], constespcolor[1], constespcolor[2], 1.f));
+	}
+	else {
+		int green = 255 - (int)((100.f - health) * 2.55f);
+		int red = (int)((100.f - health) * 2.55f);
+		color = ImColor(red, green, 0);
+	}
+
+	ImGui::GetBackgroundDrawList()->AddRect(topleft, bottomright, color, 0.f, NULL, thicknessmult * -width / 50.f);
+	ImGui::GetBackgroundDrawList()->AddCircleFilled(head, thicknessmult * -width / 25.f, ImColor(255, 255, 255));
+
+}
+
 void Menu::EndRenderFrame() {
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2{ 0.f,0.f }, ImVec2{ 500.f,500.f }, ImColor(0, 0, 0), 0.f, NULL);
 
 	ImGui::Render();
 

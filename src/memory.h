@@ -5,7 +5,6 @@
 
 class memory {
 public:
-
 	memory(const char* processname);
 	~memory();
 
@@ -18,10 +17,10 @@ public:
 
 		return value;
 	}
-	std::string Read(uintptr_t addr) {
+	std::string Read(uintptr_t addr, int bytes = 16) {
 		std::string value;
 
-		ReadProcessMemory(processH, (LPCVOID)addr, &value, 16, nullptr);
+		ReadProcessMemory(processH, (LPCVOID)addr, &value, bytes, nullptr);
 
 		return value;
 	}

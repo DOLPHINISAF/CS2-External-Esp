@@ -1,6 +1,7 @@
 #include "memory.h"
 
 //BOOL CALLBACK EnumWindowsProcMy(HWND hwnd, LPARAM lParam);
+
 memory::memory(const char* processname)
 {
 	SetProcIDandHandle(processname);
@@ -9,7 +10,6 @@ memory::~memory()
 {
 	if (processH) {
 		CloseHandle(processH);
-		processH = nullptr;
 	}
 }
 
