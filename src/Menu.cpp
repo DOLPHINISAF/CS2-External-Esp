@@ -188,7 +188,7 @@ void Menu::StartRenderFrame() {
 		//quit button
 		if (ImGui::Button("Quit"))cheatisrunning = false;
 	}
-	ImGui::Render();
+	
 
 }
 
